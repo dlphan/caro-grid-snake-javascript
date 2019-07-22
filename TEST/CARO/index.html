@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Caro</title>
+	<style>
+		input {
+			width: 50px;
+		}
+		form {
+			margin-bottom: 20px;
+		}
+		table {
+			border: 1px solid;
+			border-spacing: 0;
+		}
+		td {
+			width: 50px;
+			height: 50px;
+			border: 1px solid;
+			text-align: center;
+			font-size: 200%;
+		}
+	</style>
+</head>
+<body>
+	<form action="">
+		<label for="size">Size</label>
+		<input type="number" id="size">
+		<label for="goal">Goal</label>
+		<input type="number" id="goal">
+		<input type="submit" class="submit" value="Start">
+	</form>
+	<table></table>
+	<div class="result"></div>
+	<script>
+		const table = document.querySelector('table');
+		const result = document.querySelector('.result');
+		const form = document.querySelector('form');
+
+		const GAME = {
+			size: 3,
+			goal: 3,
+			endGame: false,
+			player: 'X',
+			arrBoard: [],
+			color: {
+				X: 'red',
+				Y: 'blue'
+			},
+			cells: []
+		};
+
+		function drawBoard() {
+			var tbody = '';
+			for (var i = 0; i < GAME.size; i++) {
+				var row = '';
+				for (var j = 0; j < GAME.size; j++) {
+					row += '<td></td>';
+				}
+				tbody += `<tr>${row}</tr>`;
+			}
+			table.innerHTML = tbody;
+		}
+
+		function convertArr2D() {
+			var k = 0;
+			var arr = [];
+			for (var i = 0; i < GAME.size; i++) {
+				var row = [];
+				for (var j = 0; j < GAME.size; j++) {
+					row.push(GAME.cells[k].textContent);
+					k++;
+				}
+				arr.push(row);
+			}
+			return arr;
+		}
+
+		function init() {
+			drawBoard();
+			GAME.player = 'X';
+			GAME.endGame = false;
+			result.innerHTML = '';
+			GAME.cells = document.querySelectorAll('td');
+
+			GAME.arrBoard = convertArr2D();
+		}
+		init();
+
+		function reset() {
+			GAME.cells.forEach(x => {
+				x.textContent ='';
+			});
+		
+			GAME.arrBoard = convertArr2D();
+			GAME.endGame = false;
+			GAME.player = 'X';
+
+			result.innerHTML = '';
+		}
+
+		function checkRow(curI,curJ) {
+			var count = 1;
+			for (var j = curJ + 1; j < GAME.size; j++) {
+				count += GAME.arrBoard[curI][j] === GAME.arrBoard[curI][curJ] ? 1 : 0;
+			}
+			for (var j = curJ - 1; j >= 0; j--) {
+				count += GAME.arrBoard[curI][j] === GAME.arrBoard[curI][curJ] ? 1 : 0;
+			}
+
+			return count === GAME.goal;
+		}
+
+		function checkCol(curI,curJ) {
+			var count = 1;
+			for (var i = curI + 1; i < GAME.size; i++) {
+				count += GAME.arrBoard[i][curJ] === GAME.arrBoard[curI][curJ] ? 1 : 0;
+			}
+			for (var i = curI - 1; i >= 0; i--) {
+				count += GAME.arrBoard[i][curJ] === GAME.arrBoard[curI][curJ] ? 1 : 0;
+			}
+
+			return count === GAME.goal;
+		}
+
+		function checkMainDiagonal(curI,curJ) {
+			var count = 1;
+			for (var i = 1; i + curI < GAME.size && i + curJ < GAME.size; i++) {
+				count += GAME.arrBoard[i+curI][i+curJ] === GAME.arrBoard[curI][curJ] ? 1 : 0;
+			}
+			for (var i = 1; curI-i >= 0 && curJ-i >= 0; i++) {
+				count += GAME.arrBoard[curI-i][curJ-i] === GAME.arrBoard[curI][curJ] ? 1 : 0;
+			}
+			return count === GAME.goal;
+		}
+
+		function checkExtraDiagonal(curI,curJ) {
+			var count = 1;
+			for (var i = 1; curI+i < GAME.size && curJ-i >= 0; i++) {
+				count += GAME.arrBoard[curI+i][curJ-i] === GAME.arrBoard[curI][curJ] ? 1 : 0;
+			}
+			for (var i = 1; curI-i >= 0 && curJ+i < GAME.size; i++) {
+				count += GAME.arrBoard[curI-i][curJ+i] === GAME.arrBoard[curI][curJ] ? 1 : 0;
+			}
+
+			return count === GAME.goal;
+		}
+
+		function checkWin(i, j) {
+			if (checkRow(i,j) || checkCol(i,j) || checkMainDiagonal(i,j) || checkExtraDiagonal(i,j)) {
+				return 1;
+			}
+
+			var count = 0;
+			GAME.arrBoard.forEach(x => {
+				if (x.includes('')) count++;
+			});
+
+			return count === 0? 0 : -1;
+		}
+
+		function printResult(checkWin, winner) {
+			if (checkWin === 1) {
+				result.innerHTML = `
+				<p>${winner} Win!!!</p>
+				<input type="submit" value="Reset" onclick=reset()>
+				`
+			} else {
+				result.innerHTML = `
+				<p>Tie!!!</p>
+				<input type="submit" value="Reset" onclick=reset()>
+				`
+			}
+		} 
+
+		function play(index) {
+			var i = Math.floor(index / GAME.size);
+			var j = index % GAME.size;
+			console.log(i,j);
+			if (GAME.arrBoard[i][j] === '' && !GAME.endGame) {
+				GAME.arrBoard[i][j] = GAME.player;
+				GAME.cells[index].innerHTML = GAME.player;
+				// GAME.cells[index].style = `color:${GAME.color[GAME.player]};`;
+				GAME.player = GAME.player === 'X' ? 'O' : 'X';
+				if (checkWin(i, j) !== -1) {
+					GAME.endGame = !GAME.endGame;
+					printResult(checkWin(i,j),GAME.arrBoard[i][j]);
+				}
+			}
+		}
+
+		function setBoard(e) {
+			e.preventDefault();
+
+			GAME.size = Number(document.querySelector('#size').value);
+			GAME.goal = Number(document.querySelector('#goal').value);
+
+			console.log(size, goal);
+
+			init();
+
+			GAME.cells.forEach((x, i) => {
+				x.addEventListener('click', (e) => play(i));
+			});
+		}
+
+		GAME.cells.forEach((x, i) => {
+			x.addEventListener('click', (e) => play(i));
+		});
+
+		form.addEventListener('submit', setBoard);
+	</script>
+</body>
+</html>

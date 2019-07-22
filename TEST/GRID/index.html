@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Grid</title>
+	<style>
+		input {
+			width: 50px;
+		}
+		table {
+			table-layout: fixed;
+			border-spacing: 0;
+			margin-top: 20px;
+		}
+
+		th, td {
+			border: 1px solid;
+			padding: 10px;
+			width: 50px;
+			text-align: center;
+		}
+		thead {
+			background: #f9f9f9;
+			width: 100%;
+		}
+		tbody {
+			height: 80vh;
+			overflow-y: auto;
+			overflow-x: hidden;
+			display: block;
+			width: 100%;
+			padding-right: 0px;
+		}
+		tbody tr {
+			width: 100%;
+		}
+		thead tr {
+			display: flex;
+			width: calc(100% - 17px);
+		}
+		.submit {
+			width: 60px;
+
+		}
+	</style>
+</head>
+<body>
+	<form action="">
+		<label for="row">Row</label>
+		<input type="number" id="row">
+		<label for="col">Col</label>
+		<input type="number" id="col">
+		<input type="submit" value="Create" class="submit">
+	</form>
+
+	<p>Cuộn chuột xuống để load thêm.</p>
+
+	<table></table>
+
+	<script>
+		const form = document.querySelector('form');
+		const table = document.querySelector('table');
+
+		const GRID = {
+			row: 0,
+			col: 0,
+			cells: undefined,
+			tbody: undefined,
+			thead: undefined,
+			theadHTML: undefined,
+			tbodyHTML: undefined,
+			arrBoard: []
+		}
+
+		function random(min, max) {
+			return Math.floor(Math.random()*(max - min + 1)) + min;
+		}
+
+		function createTbody(row) {
+			var tr = ``;
+			for (var i = 0; i < row; i++) {
+				var r = ``;
+				for (var j = 0; j < GRID.col; j++) {
+					r += `<td>${random(1,1000)}</td>`;
+				}
+				tr += `<tr>${r}</tr>`;
+			}
+			return tr;
+		}
+
+		function drawGrid() {
+			var th = ``;
+
+			for (var j = 0; j < GRID.col; j++) {
+				th += `<th>${j}</th>`;
+			}
+			
+			GRID.theadHTML = `<thead><tr>${th}</tr></thead>`;
+			GRID.tbodyHTML = `<tbody>${createTbody(GRID.row)}</tbody>`;
+
+			table.innerHTML = GRID.theadHTML + GRID.tbodyHTML;
+			// console.log(GRID.theadHTML + GRID.tbodyHTML);
+		}
+
+		function convertArr() {
+			var arr = [];
+			var k = 0;
+			for (var i = 0; i < GRID.row; i++) {
+				row = {};
+				for (var j = 0; j < GRID.col; j++) {
+					row[j] = Number(GRID.cells[k].textContent);
+					k++;
+				}
+				arr.push(row);
+			}
+			return arr;
+		}
+
+		function createGrid(e) {
+			e.preventDefault();
+
+			GRID.row = Number(document.querySelector('#row').value);
+			GRID.col = Number(document.querySelector('#col').value);
+
+			drawGrid();
+
+			GRID.tbody = document.querySelector('tbody');
+			GRID.cells = document.querySelectorAll('td');
+			GRID.arrBoard = convertArr();
+			GRID.thead = document.querySelectorAll('th');
+
+			// Sort gird
+			GRID.thead.forEach((x, i) => {
+				x.addEventListener('click', (e) => sortGrid(i));
+			});
+
+			// Load infinity
+			GRID.tbody.addEventListener('scroll', (e) => loadInfinity());
+		}
+
+		function converArrtoHTML() {
+			var tr = ``;
+			for (var i = 0; i < GRID.row; i++) {
+				var r= ``;
+				for (var j = 0; j < GRID.col; j++) {
+					r += `<td>${GRID.arrBoard[i][j]}</td>`;
+				}
+				tr += `<tr>${r}</tr>`;
+			}
+
+			GRID.tbody.innerHTML = `<tbody>${tr}</tbody>`;
+		}
+
+		function sortGrid(i) {
+			GRID.arrBoard.sort((a, b) => a[i]-b[i]);
+			converArrtoHTML();
+		}
+
+		function load100Row() {
+			GRID.row += 100;
+
+			var regex = new RegExp('</tbody>','i');
+			GRID.tbodyHTML = GRID.tbodyHTML.replace(regex, createTbody(100)) + '</tbody>';
+			
+			GRID.tbody.innerHTML = GRID.tbodyHTML;
+			GRID.cells = document.querySelectorAll('td');
+			GRID.arrBoard = convertArr();
+		}
+
+		function loadInfinity() {
+			if (GRID.tbody.scrollTop + GRID.tbody.offsetHeight + 1 > GRID.tbody.scrollHeight) {
+				load100Row();
+			}
+		}
+
+		form.addEventListener('submit', createGrid);
+	</script>
+</body>
+</html>

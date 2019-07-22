@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Snake</title>
+	<style>
+		table {
+			margin-top: 20px;
+			border-spacing: 0;
+			border: 0.1px solid;
+			padding: 0;
+		}
+		td {
+			width: 20px;
+			height: 20px;
+			border: 0.1px solid;
+			padding: 0;
+		}
+
+	</style>
+</head>
+<body>
+	<input type="submit" value="Start" class="start">
+	<div class="board">
+		<table></table>
+	</div>
+	<script>
+		const boardGame = document.querySelector('table');
+		const start = document.querySelector('.start');
+
+		const GAME =  {
+			sizeBoard: 20,
+			headSnake: {x: 10, y: 10, type: 'snake'},
+			bodySnake: [],
+			speedSnake: 1000,
+			direcSnake: 0,
+			food: {x: -1, y: -1, type: 'food'},
+			color: {
+				snake: 'blue',
+				food: 'red',
+				board: 'white'
+			},
+			listKey: [37,38,39,40],
+			mode: 'B'
+		}
+
+		function drawBoard() {
+			boardGame.innerHTML = '';
+			var table = '';
+			for (var i = 0; i < GAME.sizeBoard; i++) {
+				var tr = '';
+				for (var j = 0; j < GAME.sizeBoard; j++) {
+					tr += '<td class=""></td>';
+				}
+				table += `<tr>${tr}</tr>`;
+			}
+			return table;
+		};
+
+		
+		var cells;
+
+		function convertArr2D() {
+			var arr = [];
+			for (var i = 0; i < GAME.sizeBoard; i++) {
+				var row = [];
+				for (var j = 0; j < GAME.sizeBoard; j++) {
+					row.push({x: i, y: j, type: 'board'})
+				}
+				arr.push(row);
+			}
+			return arr;
+		}
+
+		function random(max, min) {
+			return Math.floor(Math.random()*(max - min + 1)) + min;
+		}
+
+		boardGame.innerHTML = drawBoard();
+
+		function init() {
+			cells = document.querySelectorAll('td');
+			GAME.headSnake.x = Math.floor(GAME.sizeBoard / 2);
+			GAME.headSnake.y = Math.floor(GAME.sizeBoard / 2);
+
+			GAME.food.x = random(0, 19);
+			GAME.food.y = random(0, 19);
+
+			GAME.bodySnake.push(JSON.parse(JSON.stringify(GAME.headSnake)));
+			GAME.arrBoard = convertArr2D();
+
+			updateState();
+		}
+
+		function updateState() {
+			GAME.arrBoard[GAME.food.y][GAME.food.x].type = GAME.food.type;
+
+			for (var i = 0; i < GAME.bodySnake.length; i++) {
+				GAME.arrBoard[GAME.bodySnake[i].y][GAME.bodySnake[i].x] = GAME.bodySnake[i];
+			}
+			
+			for (var i = 0; i < GAME.arrBoard.length; i++) {
+				for (var j = 0; j < GAME.arrBoard[0].length; j++) {
+					cells[i*20+j].style.background = GAME.color[GAME.arrBoard[i][j].type];
+				}
+			}
+		}
+
+		function move() {
+			var temp = GAME.arrBoard[GAME.headSnake.y][GAME.headSnake.x];
+
+			if (temp.type === 'food') {
+				temp.type = 'board';
+				console.log(GAME.bodySnake);
+				GAME.bodySnake.unshift(JSON.parse(JSON.stringify(GAME.headSnake)));
+				console.log(GAME.bodySnake);
+
+				GAME.food.x = random(0, 19);
+				GAME.food.y = random(0, 19);
+
+			} else if (temp.type !== 'food') {
+				console.log(GAME.bodySnake);
+				GAME.bodySnake.unshift(JSON.parse(JSON.stringify(GAME.headSnake)));
+				GAME.bodySnake.pop().type = 'board';
+				//GAME.headSnake = GAME.bodySnake[0];
+			}  
+
+			updateState();
+		}
+		var loop;
+		function turnDirec() {
+			var temp = GAME.headSnake;
+			switch (GAME.direcSnake) {
+				case 37:
+				GAME.headSnake.x--;
+				break;
+				case 38:
+				GAME.headSnake.y--;
+				break;
+				case 39:
+				GAME.headSnake.x++;
+				break;
+				case 40:
+				GAME.headSnake.y++;
+				break;
+			}
+
+			// var t = GAME.arrBoard[temp.y][temp.x];
+			// if (GAME.mode === 'A') {
+			// 	if (temp.x > 19 || temp.y > 19 || temp.x < 0 || temp.y < 0) {
+			// 		init();
+			// 	}
+			// } else {
+			// 	if (temp.x > 19) {
+			// 		temp.x ===  temp.x % 20;
+			// 	}
+			// 	if (temp.y > 19) {
+			// 		temp.y ===  temp.y % 20;
+			// 	}
+			// 	if (temp.x < 0) {
+			// 		temp.x ===  temp.x % 20;
+			// 	}
+			// 	if (temp.x < 0) {
+			// 		temp.x ===  temp.x % 20;
+			// 	}
+			// }
+
+			move();
+		}
+
+		window.addEventListener('keydown', (e) => {
+			var diff = Math.abs(GAME.direcSnake - e.keyCode);
+			if (GAME.listKey.includes(e.keyCode)) {
+				if (diff !== 2) {
+					GAME.direcSnake = e.keyCode;
+					clearInterval(loop);
+					// turnDirec();
+					loop = setInterval(turnDirec, GAME.speedSnake-500);
+				}
+			}
+		});
+
+		// init();
+		start.addEventListener('click', (e) => init());
+	</script>
+</body>
+</html>
